@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  simple-node-api
+  Sample SAM Template for simple-node-api
+
+Globals:
+  Function:
+    Timeout: 100
+    Environment:
+      Variables:
+        MONGO_DB_USERNAME: username
+        MONGO_DB_PASSWORD: password
+        MONGO_DB_ENDPOINT: cluster.mongodb.net/database
+
+Resources:
+  CoronavirusCases:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: coronavirus-cases/
+      Handler: app.lambdaHandler
+      Runtime: nodejs12.x
+      Events:
+        CoronavirusCases:
+          Type: HttpApi
+          Properties:
+            Path: /cases
+            Method: get
+  
+  CoronavirusResults:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: coronavirus-results/
+      Handler: app.lambdaHandler
+      Runtime: nodejs12.x
+      Events:
+        CoronavirusResults:
+          Type: HttpApi
+          Properties:
+            Path: /results
+            Method: get
+
+  UploadCases:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: upload-cases/
+      Handler: app.handler
+      Runtime: nodejs12.x
+      Events:
+        CoronavirusResults:
+          Type: HttpApi
+          Properties:
+            Path: /upload-cases
+            Method: get
+
+Outputs:
+  CoronavirusApi:
+    Description: Retrieve coronavirus data from MongoDb Atlas
+    Value:
+      Fn::Sub: https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/
+      CoronavirusFunction:
+    Description: Express Backend Lambda Function ARN
+    Value: !Sub Coronavirus.Arn
+  CoronavirusIamRole:
+    Description: Implicit IAM Role created for CoronavirusApi 
+    Value: !Sub CoronavirusFunctionRole.Arn
+    
