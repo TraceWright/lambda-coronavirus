@@ -14,7 +14,6 @@ const confirmedCasesSchema = new mongoose.Schema({
   timeseries: { type: Array, required: false },
 }, { strict: false });
 
-
 function formatData(data) { 
   return data.flatMap((element) => {
     const { location, timeseries } = element;
@@ -40,14 +39,39 @@ app.get('/', async (req, res) => {
         const ConfirmedCases = conn.model('ConfirmedCases');
         
         const cases = await ConfirmedCases.aggregate([
+          {  $unwind: "$timeseries" },
           {
-            $match: { country: "Australia" }
+            $group: {
+              _id: {country: "$country", date: "$timeseries.date"},
+              value:{$sum:"$timeseries.value"}
+            }
           },
           {
-            $addFields: { location: '$state' }
+            $sort: {
+              "_id.date": 1,
+              "_id.country": 1
+            }
+          },
+          { 
+            $group: {
+              _id: "$_id.country",  
+              timeseries:{ $push:
+                {
+                  date:"$_id.date",
+                  value:"$value"
+                }
+              },  
+            }
           },
           {
-            $project: { _id: 0, country: 0, state: 0 }
+            $addFields: {
+              location: "$_id"
+            }
+          },
+          {
+            $project: {
+              _id: 0
+            }
           }
         ]);
         formattedData = formatData(cases);

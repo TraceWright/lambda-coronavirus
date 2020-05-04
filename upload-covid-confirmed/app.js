@@ -16,11 +16,11 @@ const confirmedCasesSchema = new mongoose.Schema({
 
 function formatSubscribedData(jsonObj) {
   return {
-    country: jsonObj['Country/Region'],
+    country: jsonObj['Country/Region'].replace('*', ''),
     state: jsonObj['Province/State'],
     timeseries: Object.keys(jsonObj)
       .filter(key => Date.parse(key))
-      .map(key => ({ date: new Date(key).toISOString(), value: jsonObj[key]}))
+      .map(key => ({ date: new Date(key).toISOString(), value: parseInt(jsonObj[key])}))
     };
 }
 

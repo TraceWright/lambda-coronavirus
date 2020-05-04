@@ -39,6 +39,18 @@ Resources:
             Path: /results
             Method: get
 
+  CoronavirusCountries:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: coronavirus-countries/
+      Handler: app.lambdaHandler
+      Events:
+        CoronavirusCountries:
+          Type: HttpApi
+          Properties:
+            Path: /country
+            Method: get
+
   UploadCases:
     Type: AWS::Serverless::Function
     Properties:
