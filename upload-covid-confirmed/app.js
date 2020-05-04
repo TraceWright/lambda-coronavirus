@@ -16,7 +16,8 @@ const confirmedCasesSchema = new mongoose.Schema({
 
 function formatSubscribedData(jsonObj) {
   return {
-    country: jsonObj['Country/Region'].replace('*', ''),
+    // Remove any characters that are not a letter from the Country name
+    country: jsonObj['Country/Region'].replace(/[^a-zA-Z]/g, ''),
     state: jsonObj['Province/State'],
     timeseries: Object.keys(jsonObj)
       .filter(key => Date.parse(key))
