@@ -14,11 +14,18 @@ const confirmedCasesSchema = new mongoose.Schema({
   timeseries: { type: Array, required: false },
 }, { strict: false });
 
+function removeSpecialCharacters(name) {
+  return name
+    // Replace underscore with a space
+    .replace('_', ' ')
+    // Remove any special characters that are not a letter or space
+    .replace(/[^a-zA-Z ]/g, '');
+}
+
 function formatSubscribedData(jsonObj) {
   return {
-    // Remove any characters that are not a letter from the Country name
-    country: jsonObj['Country/Region'].replace(/[^a-zA-Z]/g, ''),
-    state: jsonObj['Province/State'],
+    country: removeSpecialCharacters(jsonObj['Country/Region']),
+    state: removeSpecialCharacters(jsonObj['Province/State']),
     timeseries: Object.keys(jsonObj)
       .filter(key => Date.parse(key))
       .map(key => ({ date: new Date(key).toISOString(), value: parseInt(jsonObj[key])}))
