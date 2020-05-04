@@ -6,7 +6,8 @@ Description: >
 
 Globals:
   Function:
-    Timeout: 100
+    Timeout: 10
+    Runtime: nodejs12.x
     Environment:
       Variables:
         MONGO_DB_USERNAME: username
@@ -19,7 +20,6 @@ Resources:
     Properties:
       CodeUri: coronavirus-cases/
       Handler: app.lambdaHandler
-      Runtime: nodejs12.x
       Events:
         CoronavirusCases:
           Type: HttpApi
@@ -32,7 +32,6 @@ Resources:
     Properties:
       CodeUri: coronavirus-results/
       Handler: app.lambdaHandler
-      Runtime: nodejs12.x
       Events:
         CoronavirusResults:
           Type: HttpApi
@@ -45,13 +44,24 @@ Resources:
     Properties:
       CodeUri: upload-cases/
       Handler: app.handler
-      Runtime: nodejs12.x
+      Timeout: 100
       Events:
-        CoronavirusResults:
-          Type: HttpApi
+        RefreshData:
+          Type: Schedule
           Properties:
-            Path: /upload-cases
-            Method: get
+            Schedule: cron(10 0,12 * * ? *)
+
+  UploadCovidConfirmed:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: upload-covid-confirmed/
+      Handler: app.handler
+      Timeout: 100
+      Events:
+        RefreshData:
+          Type: Schedule
+          Properties:
+            Schedule: cron(10 0,12 * * ? *)
 
 Outputs:
   CoronavirusApi:
