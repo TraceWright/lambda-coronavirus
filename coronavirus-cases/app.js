@@ -20,6 +20,33 @@ const chartConfigSchema = new mongoose.Schema({
   numberOfBars: { type: Number, required: false },
 }, { strict: false });
 
+function removeZeroDateValues(data) {
+  const firstDate = data[0].timeseries[0].date;
+  const firstDates = data.flatMap((el) => el.timeseries.filter(e => e.date === firstDate));
+  return firstDates.every((el) => el.value === 0)
+    ? { isEveryFirstDateZero: true,
+        data: data.map((el) => {
+          const timeseries = el.timeseries.filter(e => e.date !== firstDate);
+          return {location: el.location, timeseries};
+        })}
+    : { isEveryFirstDateZero: false, data };
+}
+
+function cleanData(data) {
+  if (data.length > 0) {
+    let isEveryFirstDateZero = true;
+    let cleanedData = data;
+    while (isEveryFirstDateZero) {
+      const result = removeZeroDateValues(cleanedData);
+      isEveryFirstDateZero = result.isEveryFirstDateZero;
+      cleanedData = result.data;
+    }
+    return cleanedData;
+  } else {
+    console.error('cleanData(): Data error');
+  }
+}
+
 function formatData(data) { 
   return data.flatMap((element) => {
     const { location, timeseries } = element;
@@ -57,7 +84,9 @@ app.get('/', async (req, res) => {
             $project: { _id: 0, country: 0, state: 0 }
           }
         ]);
-        formattedData = formatData(cases);
+
+        const cleanedData = cleanData(cases);
+        formattedData = formatData(cleanedData);
         config = await ChartConfig.findOne({location: 'australia'}).select({numberOfBars: 1, _id: 0});
         conn.close();
     }
