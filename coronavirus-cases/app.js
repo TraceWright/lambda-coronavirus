@@ -7,6 +7,7 @@ let conn = null;
 const { MONGO_DB_USERNAME, MONGO_DB_PASSWORD, MONGO_DB_ENDPOINT } = process.env;
 const uri = `mongodb+srv://${MONGO_DB_USERNAME}:${MONGO_DB_PASSWORD}@${MONGO_DB_ENDPOINT}`;
 let formattedData = [];
+let config = {};
 
 const confirmedCasesSchema = new mongoose.Schema({
   country: { type: String, required: false },
@@ -14,6 +15,10 @@ const confirmedCasesSchema = new mongoose.Schema({
   timeseries: { type: Array, required: false },
 }, { strict: false });
 
+const chartConfigSchema = new mongoose.Schema({
+  location: { type: String, required: true },
+  numberOfBars: { type: Number, required: false },
+}, { strict: false });
 
 function formatData(data) { 
   return data.flatMap((element) => {
@@ -35,9 +40,11 @@ app.get('/', async (req, res) => {
             });
             await conn;
             mongoose.model('ConfirmedCases', confirmedCasesSchema);
+            mongoose.model('ChartConfigurations', chartConfigSchema);
         }
         
         const ConfirmedCases = conn.model('ConfirmedCases');
+        const ChartConfig = conn.model('ChartConfigurations');
         
         const cases = await ConfirmedCases.aggregate([
           {
@@ -51,9 +58,10 @@ app.get('/', async (req, res) => {
           }
         ]);
         formattedData = formatData(cases);
+        config = await ChartConfig.findOne({location: 'australia'}).select({numberOfBars: 1, _id: 0});
         conn.close();
     }
-      res.send(formattedData);
+      res.send({data: formattedData, config});
 });
 
 module.exports.lambdaHandler = serverless(app);
